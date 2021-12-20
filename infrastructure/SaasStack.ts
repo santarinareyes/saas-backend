@@ -1,10 +1,23 @@
-import { Stack, StackProps } from "aws-cdk-lib"
+import { AuthorizationType } from "@aws-cdk/aws-appsync"
+import { Duration, Expiration, Stack, StackProps } from "aws-cdk-lib"
 import { Code, Function, Runtime } from "aws-cdk-lib/aws-lambda"
 import { Construct } from "constructs"
 import { join } from "path"
 import * as appsync from "@aws-cdk/aws-appsync-alpha"
 import { AttributeType, Table } from "aws-cdk-lib/aws-dynamodb"
-import { AccountRecovery, UserPool, UserPoolClient, VerificationEmailStyle } from "aws-cdk-lib/aws-cognito"
+import {
+  AccountRecovery,
+  UserPool,
+  UserPoolClient,
+  VerificationEmailStyle,
+} from "aws-cdk-lib/aws-cognito"
+import { CfnGraphQLApi } from "aws-cdk-lib/aws-appsync"
+import {
+  AuthorizationType,
+  FieldLogLevel,
+  GraphqlApi,
+  Schema,
+} from "@aws-cdk/aws-appsync-alpha"
 
 export class SaasStack extends Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
@@ -14,70 +27,45 @@ export class SaasStack extends Stack {
       selfSignUpEnabled: true,
       accountRecovery: AccountRecovery.PHONE_AND_EMAIL,
       userVerification: {
-        emailStyle: VerificationEmailStyle.CODE
+        emailStyle: VerificationEmailStyle.CODE,
       },
       autoVerify: {
-        email: true
+        email: true,
       },
       standardAttributes: {
         email: {
           required: true,
-          mutable: true
-        }
-      }
+          mutable: true,
+        },
+      },
     })
 
     const userPoolClient = new UserPoolClient(this, "UserPoolClient", {
-      userPool
+      userPool,
     })
 
-
-    
-  //   const api = new appsync.GraphqlApi(this, "Api", {
-  //     name: "demo",
-  //     schema: appsync.Schema.fromAsset(
-  //       join(__dirname, "..", "graphql", "schema.graphql")
-  //     ),
-  //     authorizationConfig: {
-  //       defaultAuthorization: {
-  //         authorizationType: appsync.AuthorizationType.IAM,
-  //       },
-  //     },
-  //     xrayEnabled: true,
-  //   })
-
-  //   const demoTable = new Table(this, "DemoTable", {
-  //     partitionKey: {
-  //       name: "id",
-  //       type: AttributeType.STRING,
-  //     },
-  //   })
-
-  //   const demoDS = api.addDynamoDbDataSource("demoDataSource", demoTable)
-
-  //   // Resolver for the Query "getDemos" that scans the DynamoDb table and returns the entire list.
-  //   demoDS.createResolver({
-  //     typeName: "Query",
-  //     fieldName: "getDemos",
-  //     requestMappingTemplate: appsync.MappingTemplate.dynamoDbScanTable(),
-  //     responseMappingTemplate: appsync.MappingTemplate.dynamoDbResultList(),
-  //   })
-
-  //   // Resolver for the Mutation "addDemo" that puts the item into the DynamoDb table.
-  //   demoDS.createResolver({
-  //     typeName: "Mutation",
-  //     fieldName: "addDemo",
-  //     requestMappingTemplate: appsync.MappingTemplate.dynamoDbPutItem(
-  //       appsync.PrimaryKey.partition("id").auto(),
-  //       appsync.Values.projecting("input")
-  //     ),
-  //     responseMappingTemplate: appsync.MappingTemplate.dynamoDbResultItem(),
-  //   })
-
-  //   const helloLambda = new Function(this, "helloLambda", {
-  //     runtime: Runtime.NODEJS_14_X,
-  //     code: Code.fromAsset(join(__dirname, "..", "services", "test")),
-  //     handler: "hello.main",
-  //   })
-  // }
+    const api = new GraphqlApi(this, "saas-api", {
+      name: "saas-api",
+      logConfig: {
+        fieldLogLevel: FieldLogLevel.ALL,
+      },
+      schema: Schema.fromAsset("../graphql/schema.graphql"),
+      authorizationConfig: {
+        defaultAuthorization: {
+          authorizationType: AuthorizationType.API_KEY,
+          apiKeyConfig: {
+            expires: Expiration.after(Duration.days(365)),
+          },
+        },
+        additionalAuthorizationModes: [
+          {
+            authorizationType: AuthorizationType.USER_POOL,
+            userPoolConfig: {
+              userPool,
+            },
+          },
+        ],
+      },
+    })
+  }
 }
