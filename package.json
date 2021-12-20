@@ -1,0 +1,31 @@
+{
+  "name": "saas-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/santarinareyes/saas-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/santarinareyes/saas-backend/issues"
+  },
+  "homepage": "https://github.com/santarinareyes/saas-backend#readme",
+  "devDependencies": {
+    "aws-cdk": "^2.2.0",
+    "aws-cdk-lib": "^2.2.0",
+    "constructs": "^10.0.12",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.4"
+  },
+  "dependencies": {
+    "@aws-cdk/aws-appsync": "^1.136.0",
+    "@aws-cdk/aws-appsync-alpha": "^2.2.0-alpha.0"
+  }
+}
